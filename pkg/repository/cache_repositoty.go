@@ -39,13 +39,13 @@ func (r *redisCacheRepository) Delete(ctx context.Context, key string) error {
 }
 
 func (r *redisCacheRepository) DeleteByPattern(ctx context.Context, pattern string) error {
-	keys, err := r.client.Keys(ctx, pattern).Result()
-	if err != nil {
-		return err
+	iter := r.client.Scan(ctx, 0, pattern, 0).Iterator()
+	for iter.Next(ctx) {
+		r.client.Del(ctx, iter.Val())
 	}
 
-	if len(keys) > 0 {
-		return r.client.Del(ctx, keys...).Err()
+	if err := iter.Err(); err != nil {
+		return err
 	}
 	return nil
 }

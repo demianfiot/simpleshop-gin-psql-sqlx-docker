@@ -4,7 +4,6 @@ import (
 	"prac/pkg/service"
 	"time"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,22 +18,22 @@ func NewHandler(services service.Service) *Handler {
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 	//cors -
-	router.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:3000", "http://127.0.0.1:3000"},
-		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders: []string{
-			"Origin",
-			"Content-Type",
-			"Authorization",
-			"Accept",
-			"X-Requested-With",
-			"Access-Control-Allow-Headers",
-			"Access-Control-Allow-Origin",
-		},
-		ExposeHeaders:    []string{"Content-Length", "Authorization"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	// router.Use(cors.New(cors.Config{
+	// 	AllowOrigins: []string{"http://localhost:3000", "http://127.0.0.1:3000"},
+	// 	AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+	// 	AllowHeaders: []string{
+	// 		"Origin",
+	// 		"Content-Type",
+	// 		"Authorization",
+	// 		"Accept",
+	// 		"X-Requested-With",
+	// 		"Access-Control-Allow-Headers",
+	// 		"Access-Control-Allow-Origin",
+	// 	},
+	// 	ExposeHeaders:    []string{"Content-Length", "Authorization"},
+	// 	AllowCredentials: true,
+	// 	MaxAge:           12 * time.Hour,
+	// }))
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":    "OK",

@@ -1,12 +1,12 @@
 port : "8080"
 
 db : 
-      username : "postgres" #"crm_user_actual"
-      host : "dbgo.czcqgcwgs39c.eu-central-1.rds.amazonaws.com" #"postgres"
+      username : "crm_user" #"crm_user_actual"
+      host : "localhost" #"postgres"
       port : "5432"
-      dbname : "appdb" #"crm_db"
+      dbname : "crm_db" #"crm_db"
       sslmode : "disable"
 redis:
-      host: "localhost" #"redis"
+      host: "localhost" #"redis" "localhost"
       port: "6379"
       db: 0 

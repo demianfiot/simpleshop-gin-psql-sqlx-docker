@@ -21,7 +21,7 @@ func NewProductService(repo repository.Product, cacheRepo repository.CacheReposi
 		repo:         repo,
 		cacheRepo:    cacheRepo,
 		cacheTTL:     10 * time.Minute, // TTL user
-		listCacheTTL: 2 * time.Minute,  // TTL list
+		listCacheTTL: 5 * time.Minute,  // TTL list
 	}
 }
 
@@ -48,7 +48,29 @@ func (s *ProductService) CreateProduct(ctx context.Context, input todo.CreatePro
 }
 
 func (s *ProductService) GetAllProducts(ctx context.Context) ([]todo.Product, error) {
-	return s.repo.GetAllProducts(ctx)
+	cacheKey := s.productsListCacheKey()
+
+	// cache
+	cachedData, err := s.cacheRepo.Get(ctx, cacheKey)
+	if err == nil && cachedData != nil {
+		var products []todo.Product
+		if err := json.Unmarshal(cachedData, &products); err == nil {
+			return products, nil
+		}
+		return products, nil
+	}
+
+	//db
+	products, err := s.repo.GetAllProducts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(products) > 0 {
+		s.cacheRepo.Set(ctx, cacheKey, products, s.listCacheTTL)
+	}
+
+	return products, nil
 }
 
 func (s *ProductService) GetProductByID(ctx context.Context, productID uint) (todo.Product, error) {
@@ -66,7 +88,7 @@ func (s *ProductService) GetProductByID(ctx context.Context, productID uint) (to
 		return todo.Product{}, err
 	}
 
-	s.cacheRepo.Set(ctx, cacheKey, product, 10*time.Minute)
+	s.cacheRepo.Set(ctx, cacheKey, product, s.cacheTTL)
 
 	return product, nil
 
