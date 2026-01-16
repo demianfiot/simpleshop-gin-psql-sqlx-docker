@@ -64,7 +64,9 @@ func (s *UserService) GetAllUsers(ctx context.Context) ([]todo.User, error) {
 	cachedData, err := s.cacheRepo.Get(ctx, cacheKey)
 	if err == nil && cachedData != nil {
 		var users []todo.User
-		json.Unmarshal(cachedData, &users)
+		if err := json.Unmarshal(cachedData, &users); err == nil {
+			return users, nil
+		}
 		return users, nil
 	}
 
@@ -75,7 +77,7 @@ func (s *UserService) GetAllUsers(ctx context.Context) ([]todo.User, error) {
 	}
 
 	if len(users) > 0 {
-		s.cacheRepo.Set(ctx, cacheKey, users, 5*time.Minute)
+		s.cacheRepo.Set(ctx, cacheKey, users, s.listCacheTTL)
 	}
 
 	return users, nil
@@ -87,7 +89,9 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uint) (todo.User, 
 	cachedData, err := s.cacheRepo.Get(ctx, cacheKey)
 	if err == nil && cachedData != nil {
 		var user todo.User
-		json.Unmarshal(cachedData, &user)
+		if err := json.Unmarshal(cachedData, &user); err == nil {
+			return user, nil
+		}
 		return user, nil
 	}
 
@@ -97,7 +101,7 @@ func (s *UserService) GetUserByID(ctx context.Context, userID uint) (todo.User, 
 		return todo.User{}, err
 	}
 
-	s.cacheRepo.Set(ctx, cacheKey, user, 10*time.Minute)
+	s.cacheRepo.Set(ctx, cacheKey, user, s.cacheTTL)
 
 	return user, nil
 }
@@ -108,7 +112,9 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (todo.Us
 	cachedData, err := s.cacheRepo.Get(ctx, cacheKey)
 	if err == nil && cachedData != nil {
 		var user todo.User
-		json.Unmarshal(cachedData, &user)
+		if err := json.Unmarshal(cachedData, &user); err == nil {
+			return user, nil
+		}
 		return user, nil
 	}
 	//db
@@ -117,8 +123,8 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (todo.Us
 		return todo.User{}, err
 	}
 
-	s.cacheRepo.Set(ctx, cacheKey, user, 10*time.Minute)
-	s.cacheRepo.Set(ctx, s.userCacheKey(user.ID), user, 10*time.Minute)
+	s.cacheRepo.Set(ctx, cacheKey, user, s.cacheTTL)
+	s.cacheRepo.Set(ctx, s.userCacheKey(user.ID), user, s.cacheTTL)
 
 	return user, nil
 }
