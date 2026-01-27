@@ -12,24 +12,29 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/segmentio/kafka-go"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 func main() {
+	if err := initConfig(); err != nil {
+		logrus.Fatalf("error initializating configs: %s", err.Error())
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{"localhost:9092"},
-		Topic:   "order_events",
-		GroupID: "analytics-service", // dl9 grupi - mashtabuvann9
+		Brokers: viper.GetStringSlice("kafka.bootstrap_servers"),
+		Topic:   viper.GetString("kafka.topic_orders"),
+		GroupID: viper.GetString("kafka.group_id"), // dl9 grupi - mashtabuvann9
 	})
 	defer reader.Close()
 	conn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{"localhost:9000"},
+		Addr: []string{viper.GetString("clickhouse.host") + ":" + viper.GetString("clickhouse.port")},
 		Auth: clickhouse.Auth{
-			Database: "default",
-			Username: "analytics",
-			Password: "secret",
+			Database: viper.GetString("clickhouse.database"),
+			Username: viper.GetString("clickhouse.user"),
+			Password: viper.GetString("clickhouse.password"),
 		},
 	})
 	if err != nil {
@@ -49,19 +54,22 @@ func main() {
 	}()
 
 	for {
-		msg, err := reader.ReadMessage(ctx)
+		msg, err := reader.FetchMessage(ctx) // readmsg має автоматичний коміт
 		if err != nil {
 			log.Println("reader stopped:", err)
 			return
 		}
-
 		var event todo.OrderCreatedEvent
 		if err := json.Unmarshal(msg.Value, &event); err != nil {
 			log.Println("invalid message:", err)
 			continue
 		}
 		if err := repo.InsertOrder(ctx, event); err != nil {
-			log.Println("failed to insert into clickhouse:", err)
+			log.Println("failed to insert:", err)
+			continue // offset НЕ комітимо
+		}
+		if err := reader.CommitMessages(ctx, msg); err != nil {
+			log.Println("commit failed:", err)
 		}
 		log.Printf(
 			"Order %d created by user %d, total %.2f",
@@ -70,4 +78,9 @@ func main() {
 			event.Total,
 		)
 	}
+}
+func initConfig() error {
+	viper.AddConfigPath("configs")
+	viper.SetConfigName("config")
+	return viper.ReadInConfig()
 }

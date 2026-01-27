@@ -10,3 +10,14 @@ redis:
       host: "localhost" #"redis" "localhost"
       port: "6379"
       db: 0 
+kafka:
+      bootstrap_servers:
+        - "localhost:9092"
+      topic_orders: "order_events"
+      group_id: "analytics-service"
+clickhouse:
+      host: "localhost"
+      port: "9000"
+      database: "default"
+      user: "analytics"
+      password: "secret"

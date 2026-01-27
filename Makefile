@@ -1,4 +1,4 @@
-.PHONY: migrate-up migrate-down migrate-create db-shell
+.PHONY: migrate-up migrate-down migrate-create klickhouse-migrate-up db-shell
 
 
 include .env
@@ -30,11 +30,16 @@ migrate-create:
 		-v $(PWD)/schema:/schema \
 		migrate/migrate \
 		create -ext sql -dir /schema -seq $${name}
+		
 klickhouse-migrate-up:
 	docker exec -it clickhouse clickhouse-client \
 	--query "$(cat schema/clickhouse/001_create_orders_analytics.sql)"
 
-
+klickhousedb:
+	docker exec -it clickhouse clickhouse-client \
+  --user $(CLICKHOUSE_USER) \
+  --password $(CLICKHOUSE_PASSWORD) \
+  --database $(CLICKHOUSE_DATABASE)
 # команди
 up:
 	docker-compose up -d
