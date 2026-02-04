@@ -15,7 +15,7 @@ import (
 
 // @title       User Service API
 // @version     1.0
-// @description This API allows creating, retrieving, updating, and deleting users/products/orders.
+// @description This API allows creating, retrieving, updating, and deleting users/products.
 
 // @host     localhost:8080
 // @BasePath /
