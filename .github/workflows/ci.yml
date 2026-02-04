@@ -59,15 +59,22 @@ jobs:
     steps:
       - name: SSH Deploy
         uses: appleboy/ssh-action@v1
+        env:
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         with:
           host: ${{ secrets.HOST }}
           username: root
           key: ${{ secrets.SSH_KEY }}
-          env:
-            REGISTRY: ${{ env.REGISTRY }}
-            IMAGE_NAME: ${{ env.IMAGE_NAME }}
-            IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
           script: |
             cd /app
+            
+            echo "IMAGE_TAG=$IMAGE_TAG"
+            echo "REGISTRY=$REGISTRY"
+            echo "IMAGE_NAME=$IMAGE_NAME"
+
             docker compose pull
-            docker compose up -d 
+            export IMAGE_FULL="$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
+            docker compose up -d --remove-orphans
+
