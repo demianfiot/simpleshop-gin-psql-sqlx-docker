@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
       args:
         APP_VERSION: "1.0.0"
-    image: crm-backend:latest
+    image: demian/crm-backend:1.0.0
     container_name: crm-backend  
     environment:
       DB_HOST: ${DB_HOST}  
@@ -45,7 +45,7 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: postgres #crm-postgres
+    container_name: postgres 
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -67,7 +67,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis #crm-redis
+    container_name: redis 
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
