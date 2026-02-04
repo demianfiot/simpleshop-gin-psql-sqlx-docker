@@ -7,7 +7,6 @@ on:
 env:
   REGISTRY: demcheek3/gopracrepo
   IMAGE_NAME: go-backend
-  IMAGE_TAG: ${{ env.IMAGE_TAG }}
 
 jobs:
 
@@ -27,15 +26,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: test
+    outputs:
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
     steps:
-      - name: Checkout develop
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: set_tag
+        run: |
+          IMAGE_TAG=${GITHUB_SHA:0:7}   # короткий SHA
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Build docker image
         run: |
-          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)
-          docker build -t $REGISTRY/$IMAGE_NAME:$IMAGE_TAG .
-          docker tag $REGISTRY/$IMAGE_NAME:$IMAGE_TAG $REGISTRY/$IMAGE_NAME:latest
+          docker build -t $REGISTRY/$IMAGE_NAME:${{ steps.set_tag.outputs.image_tag }} .
+          docker tag $REGISTRY/$IMAGE_NAME:${{ steps.set_tag.outputs.image_tag }} $REGISTRY/$IMAGE_NAME:latest
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -45,7 +50,7 @@ jobs:
 
       - name: Push image
         run: |
-          docker push $REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+          docker push $REGISTRY/$IMAGE_NAME:${{ steps.set_tag.outputs.image_tag }}
           docker push $REGISTRY/$IMAGE_NAME:latest
 
   deploy:
@@ -58,7 +63,11 @@ jobs:
           host: ${{ secrets.HOST }}
           username: root
           key: ${{ secrets.SSH_KEY }}
+          env:
+            REGISTRY: ${{ env.REGISTRY }}
+            IMAGE_NAME: ${{ env.IMAGE_NAME }}
+            IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
           script: |
             cd /app
             docker compose pull
-            docker compose up -d
+            docker compose up -d 
