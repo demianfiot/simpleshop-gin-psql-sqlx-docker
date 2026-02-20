@@ -44,13 +44,13 @@ func (h *Handler) userIdentity(c *gin.Context) {
 func (h *Handler) requireRole(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		fmt.Printf("DEBUG: Checking role for path: %s\n", c.Request.URL.Path)
-		userRole, exists := c.Get(userRole)
+		roleValue, exists := c.Get(userRole)
 		if !exists {
 			NewErrorResponse(c, http.StatusForbidden, "user role not found")
 			return
 		}
 
-		role, ok := userRole.(string)
+		role, ok := roleValue.(string)
 		if !ok {
 			NewErrorResponse(c, http.StatusForbidden, "invalid user role type")
 			return

@@ -32,10 +32,11 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"id":    product.ID,
-		"name":  product.Name,
-		"price": product.Price,
-		"stock": product.Stock,
+		"id":          product.ID,
+		"description": product.Description,
+		"name":        product.Name,
+		"price":       product.Price,
+		"stock":       product.Stock,
 	})
 }
 
@@ -103,10 +104,7 @@ func (h *Handler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"product": updatedProduct,
-		"message": "Product updated successfully",
-	})
+	c.JSON(http.StatusOK, updatedProduct)
 }
 func (h *Handler) DeleteProduct(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
