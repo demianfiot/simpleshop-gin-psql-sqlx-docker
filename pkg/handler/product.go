@@ -54,13 +54,13 @@ func (h *Handler) GetAllProducts(c *gin.Context) {
 }
 
 func (h *Handler) GetProductByID(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	productID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		NewErrorResponse(c, http.StatusBadRequest, "invalid product id param")
 		return
 	}
 	ctx := c.Request.Context()
-	product, err := h.services.Product.GetProductByID(ctx, uint(id))
+	product, err := h.services.Product.GetProductByID(ctx, uint(productID))
 	if err != nil {
 		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -90,6 +90,16 @@ func (h *Handler) UpdateProduct(c *gin.Context) {
 		return
 	}
 	ctx := c.Request.Context()
+	product, err := h.services.Product.GetProductByID(ctx, uint(productID))
+	if err != nil {
+		NewErrorResponse(c, http.StatusNotFound, "product not found")
+		return
+	}
+	if product.SellerID != currentUserID {
+		NewErrorResponse(c, http.StatusForbidden, "you are not owner of this product")
+		return
+	}
+	ctx = c.Request.Context()
 	updatedProduct, err := h.services.Product.UpdateProduct(ctx, uint(productID), input, currentUserID)
 	if err != nil {
 		if err == repository.ErrProductNotFound {
@@ -107,13 +117,28 @@ func (h *Handler) UpdateProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, updatedProduct)
 }
 func (h *Handler) DeleteProduct(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	productID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		NewErrorResponse(c, http.StatusBadRequest, "invalid user id param")
 		return
 	}
+	currentUserID, err := h.getUserID(c)
+	if err != nil {
+		NewErrorResponse(c, http.StatusUnauthorized, err.Error())
+		return
+	}
 	ctx := c.Request.Context()
-	err = h.services.Product.DeleteProduct(ctx, id)
+	product, err := h.services.Product.GetProductByID(ctx, uint(productID))
+	if err != nil {
+		NewErrorResponse(c, http.StatusNotFound, "product not found")
+		return
+	}
+	if product.SellerID != currentUserID {
+		NewErrorResponse(c, http.StatusForbidden, "you are not owner of this product")
+		return
+	}
+	ctx = c.Request.Context()
+	err = h.services.Product.DeleteProduct(ctx, productID)
 	if err != nil {
 		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
